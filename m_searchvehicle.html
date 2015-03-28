@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<link rel="stylesheet" href="css/jquery.mobile-automarket.css">
+<link rel="stylesheet" href="css/mobile_styles.css">
+<script src="js/jquery-1.8.3.min.js"></script>
+
+<script src="js/jquery.mobile-1.4.2.min.js"></script>
+<script>
+
+app_url="http://www.autoasia.in/admin/m_getitems.php";
+//app_url="http://dreamserver2/workarea/AutoAsia_Mobile_Apps/web/admin/m_getitems.php";
+	
+	
+function onMftSelect(){	
+	vcat= $('#sv_mftname').val();
+	//alert(vcat);		
+	if(!vcat=="") {
+		url=app_url + "?m=listmodel&mft="+vcat;	
+		$.ajax({
+		  url: url,
+		  dataType: 'json',
+		  success: function(result){			
+			data=result['data'];			
+			models=data.split("|");			
+			$('#sv_model').empty();
+			$('#sv_model').append(new Option("Select Model",""));
+			$.each(models, function(val, text) {	
+				itm=text.split("=>");			
+				$('#sv_model').append(new Option(itm[1],itm[0]));
+				//alert(itm[1]);
+			});	
+			$('#sv_model').selectmenu('refresh');		
+			$('#err_model').hide();	
+		  },
+		  error: function(request, textStatus, errorThrown) { $('#err_model').show(); alert("Error on Loading, Click Retry Now Button"); },
+		  complete: function(request, textStatus) { //for additional info
+			//alert("text="+request.responseText);
+			//alert("status="+textStatus);
+		  }
+		});			
+	}	
+	clearResult();	
+}
+
+
+
+function loadIntiData(){		
+	// Loading Year 
+	$('#sv_year').empty();
+	$('#sv_year').append(new Option("Select Year",""));	
+	cy=new Date().getFullYear();
+	for (y=cy;y>cy-11;y--){
+	   $('#sv_year').append(new Option(y,y));
+	   //alert(itm[1]);
+	}
+	$('#sv_year').selectmenu('refresh');		
+	
+	// Load Manufacturer
+	url=app_url + "?m=listmanu";	
+	$.ajax({
+	  url: url,
+	  dataType: 'json',
+	  success: function(result){	//alert("token recieved: " + result.token);
+		data=result['data'];	
+	    manu=data.split("|");			
+	    $('#sv_mftname').empty();
+	    $('#sv_mftname').append(new Option("Select Manufacturer",""));	
+	    $.each(manu, function(val, txt) {	
+		    itm=txt.split("=>");			
+		    $('#sv_mftname').append(new Option(itm[1],itm[0]));
+		    //alert(itm[1]);
+	    });	
+	    $('#sv_mftname').selectmenu('refresh');	
+		$('#err_manu').hide(); 		
+	  },
+	  error: function(request, textStatus, errorThrown) { $('#err_manu').show(); alert("Error on Loading, Click Retry Now Button");	  },
+	  complete: function(request, textStatus) { //for additional info
+		//alert("text="+request.responseText);
+		//alert("status="+textStatus);
+	  }
+	});
+	clearResult();
+}
+
+  $(function(){
+    /* initiate the plugin */
+    $("div.holder").jPages({
+        containerID  : "itemContainer",
+        perPage      : 10,
+        startPage    : 1,
+        startRange   : 1,
+        midRange     : 5,
+        endRange     : 1
+    });
+});
+
+$( document ).on( "pagecreate", "#pageone", function() {
+
+
+
+
+	$( "#autocomplete" ).on( "filterablebeforefilter", function ( e, data ) {
+        var $ul = $( this ),
+            $input = $( data.input ),
+            value = $input.val(),
+            html = "";
+        $ul.html( "" );	
+        if ( value && value.length > 2 ) {
+            $ul.html( "<li><div class='ui-loader'><span class='ui-icon ui-icon-loading'>Loading Data</span></div></li>" );
+            $ul.listview( "refresh" );
+            $.ajax({
+                url: "http://www.autoasia.in/admin/m_getitems.php",
+                dataType: "json",
+                crossDomain: true,
+                data: {
+				 	m: 'search',
+                    q: $input.val()
+                }
+            })
+            .then( function ( response ) {			
+                $.each( response, function ( i, val ) {
+                    html += "<li>" + val + "</li>";
+                });
+                $ul.html( html );
+                $ul.listview( "refresh" );
+                $ul.trigger( "updatelayout");
+            });
+        }
+    });
+});
+
+function SearchVehicle(){
+	mid=$('#sv_model').val();	
+	
+	html="";
+	var $ul = $( "#autocomplete" );  
+	$ul.html( "<li><div class='ui-loader'><span class='ui-icon ui-icon-loading'>Loading Data</span></div></li>" );
+	$ul.listview( "refresh" );
+	$.ajax({
+		url: app_url ,
+		dataType: "json",
+		crossDomain: true,
+		data: {
+			m: 'search',
+			q: mid
+		}
+	})
+	.then( function ( response ) {
+		$.each( response, function ( i, val ) {				
+			//html += "<li>" + val +"</li>";
+			data=val.split("|");
+			if (data.length>1){
+				strHtml='<label><b class="orange" >'+data[0]+'</b></label><div class="imgholder"><img src="http://www.autoasia.in/admin/images/'+data[2]+'" width="80"  class="imgstyle"  /></div><div class="textholder" ><label><b>'+data[3]+' ('+data[4]+') <br> Rs. '+data[5]+' Lakhs</b></label><label >'+data[1]+'</label></div><button type="button" name="btn_view"   data-inline="true" style="padding:5px;"    data-theme="b" onClick="CalltoMobile('+data[6]+')" ><img src="images/phone.png" width="32" height="32" align="absmiddle"   /> Call Now</button>&nbsp;<button type="button" name="btn_view"   data-inline="true" style="padding:5px;"    data-theme="b" onClick="CalltoSMS('+data[6]+')" ><img src="images/sms.png" width="32" height="32" align="absmiddle"   /> SMS Now</button>';
+			}else if (data[0]=="No Data Found"){
+				strHtml='<label><b>'+data[0]+'</b></label>';
+			}
+			html += "<li>" + strHtml +"</li>";
+		});
+		$ul.html( html );
+		$ul.listview( "refresh" );		
+		$ul.trigger('create');
+	});
+}
+
+function clearResult(){
+	var $ul = $( "#autocomplete" );  
+	$ul.html( "" );
+	$ul.listview( "refresh" );
+}
+function CalltoMobile(mobile){
+     var dataObj = new Object();       
+     dataObj.mobile_number = mobile;       
+     var jsonObj = JSON.stringify(dataObj);
+     androidObject.CalltoMobile(jsonObj);
+}     
+function CalltoSMS(mobile){
+     var dataObj = new Object();       
+     dataObj.mobile_number = mobile;              
+     var jsonObj = JSON.stringify(dataObj);
+     androidObject.CalltoSMS(jsonObj);
+}     
+</script>
+
+</head>
+<body onLoad="loadIntiData();">
+
+<div data-role="page" id="pageone"  data-theme="a">
+	<div data-role="header" class="blackbg" data-theme="b">
+  		<h1>Search Vehicle</h1>
+  	</div>
+
+    <div data-role="content"  >   
+    <form enctype="multipart/form-data" method="post" class="form-horizontal">
+			<div data-role="fieldcontain">
+				<label for="sv_mftname">Manufacturer Name</label>
+				<select class="selectpicker" name="sv_mftname" id="sv_mftname" data-native-menu="false"  onChange="onMftSelect()" >
+                	<option value="">Select Manufacturer</option>
+	
+  
+				</select>
+                <label></label>
+                <div id="err_manu"  name="err_manu" class="centerbox" style="display:none">
+ <button type="button" name="btn_err" data-icon="refresh" data-inline="true"   data-theme="b" data-mini="true" onClick="loadIntiData()" >Loading Error. Retry now</button></div>
+			</div>
+			<div data-role="fieldcontain">
+				<label for="sv_model">Model Name</label>
+				<select class="selectpicker" name="sv_model" id="sv_model" data-native-menu="false"  onChange="clearResult()"   >
+                	<option value="">Select Model</option>          
+    			</select>
+                <label></label>
+                <div id="err_model"  name="err_model" class="centerbox" style="display:none">
+ <button type="button" name="btn_err" data-icon="refresh" data-inline="true"   data-theme="b" data-mini="true" onClick="onMftSelect()" >Loading Error. Retry now</button></div>
+			</div>
+			
+			<div data-role="fieldcontain" >
+            <label for="sv_year"></label>
+           
+                    <button type="button" name="btn_view"   data-icon="check"   data-inline="true" class="mybtn redbtn"  data-theme="b" onClick="SearchVehicle()"   >Search Vehicle</button>
+                
+	  </div>
+            
+          
+		</form>             
+        <ul id="autocomplete" data-role="listview" style="margin-top:10px"   >
+
+        </ul>
+        
+           
+  </div>
+			
+
+		
+</div>
+</body>
+</html>

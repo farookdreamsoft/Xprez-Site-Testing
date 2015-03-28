@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+
+<link rel="stylesheet" href="css/jquery.mobile-automarket.css">
+<link rel="stylesheet" href="css/mobile_styles.css">
+<script src="./js/jquery-1.8.3.min.js"></script>
+<script src="js/jquery.mobile-1.4.2.min.js"></script>
+<script>
+$('#pageone').live('pageinit', function() {
+    $('#select').bind('change', function(event) {
+	 //alert($('#select').val());
+	});
+});
+
+function ReqValue(){	
+	vmodid= $('#sv_model').val();
+	vyear= $('#sv_year').val();	
+	if(!vmodid=="") {
+		url="http://www.autoasia.in/admin/m_getitems.php?m=reqvalue&mid="+vmodid+"&yrs="+vyear;	
+		$.ajax({
+		  url: url,
+		  dataType: 'json',
+		  success: function(result){			
+			data=result['data'];		
+			
+			$('#sv_result').html(data);
+			$('#err_res').hide();			
+		  },
+		  error: function(request, textStatus, errorThrown) { $('#err_res').show(); alert("Error on Loading, Click Retry Now Button"); },
+		  complete: function(request, textStatus) { //for additional info
+			//alert("text="+request.responseText);
+			//alert("status="+textStatus);
+		  }
+		});			
+	}		
+}
+
+
+
+
+function onMftSelect(){	
+	vcat= $('#sv_mftname').val();
+	//alert(vcat);		
+	if(!vcat=="") {
+		url="http://www.autoasia.in/admin/m_getitems.php?m=listmodel&mft="+vcat;	
+		$.ajax({
+		  url: url,
+		  dataType: 'json',
+		  success: function(result){			
+			data=result['data'];			
+			models=data.split("|");			
+			$('#sv_model').empty();
+			$('#sv_model').append(new Option("Select Model",""));
+			$.each(models, function(val, text) {	
+				itm=text.split("=>");			
+				$('#sv_model').append(new Option(itm[1],itm[0]));
+				//alert(itm[1]);
+			});	
+			$('#sv_model').selectmenu('refresh');		
+			$('#err_model').hide();	
+		  },
+		  error: function(request, textStatus, errorThrown) { $('#err_model').show(); alert("Error on Loading, Click Retry Now Button"); },
+		  complete: function(request, textStatus) { //for additional info
+			//alert("text="+request.responseText);
+			//alert("status="+textStatus);
+		  }
+		});			
+	}		
+}
+
+
+
+function loadIntiData(){		
+	// Loading Year 
+	$('#sv_year').empty();
+	$('#sv_year').append(new Option("Select Year",""));	
+	cy=new Date().getFullYear();
+	for (y=cy;y>cy-11;y--){
+	   $('#sv_year').append(new Option(y,y));
+	   //alert(itm[1]);
+	}
+	$('#sv_year').selectmenu('refresh');		
+	
+	// Load Manufacturer
+	url="http://www.autoasia.in/admin/m_getitems.php?m=listmanu";	
+	$.ajax({
+	  url: url,
+	  dataType: 'json',
+	  success: function(result){	//alert("token recieved: " + result.token);
+		data=result['data'];	
+	    manu=data.split("|");			
+	    $('#sv_mftname').empty();
+	    $('#sv_mftname').append(new Option("Select Manufacturer",""));	
+	    $.each(manu, function(val, txt) {	
+		    itm=txt.split("=>");			
+		    $('#sv_mftname').append(new Option(itm[1],itm[0]));
+		    //alert(itm[1]);
+	    });	
+	    $('#sv_mftname').selectmenu('refresh');	
+		$('#err_manu').hide(); 		
+	  },
+	  error: function(request, textStatus, errorThrown) { $('#err_manu').show(); alert("Error on Loading, Click Retry Now Button");	  },
+	  complete: function(request, textStatus) { //for additional info
+		//alert("text="+request.responseText);
+		//alert("status="+textStatus);
+	  }
+	});
+}
+
+</script>
+
+</head>
+<body onLoad="loadIntiData()">
+
+<div data-role="page" id="pageone" data-theme="a">
+	<div data-role="header"  class="blackbg" data-theme="b">
+  		<h1>Get Re-Sale Value</h1>
+  	</div>
+	<div data-role="content">
+		<form enctype="multipart/form-data" method="post" class="form-horizontal">
+			<div data-role="fieldcontain">
+				<label for="sv_mftname">Manufacturer Name</label>
+				<select class="selectpicker" name="sv_mftname" id="sv_mftname" data-native-menu="false"  onChange="onMftSelect()" >
+                	<option value="">Select Manufacturer</option>
+	
+  
+				</select>
+                <label></label>
+                <div id="err_manu"  name="err_manu" class="centerbox" style="display:none">
+ <button type="button" name="btn_err" data-icon="refresh" data-inline="true"   data-theme="b" data-mini="true" onClick="loadIntiData()" >Loading Error. Retry now</button></div>
+			</div>
+			<div data-role="fieldcontain">
+				<label for="sv_model">Model Name</label>
+				<select class="selectpicker" name="sv_model" id="sv_model" data-native-menu="false"    >
+                	<option value="">Select Model</option>          
+    			</select>
+                <label></label>
+                <div id="err_model"  name="err_model" class="centerbox" style="display:none">
+ <button type="button" name="btn_err" data-icon="refresh" data-inline="true"   data-theme="b" data-mini="true" onClick="onMftSelect()" >Loading Error. Retry now</button></div>
+			</div>
+			<div data-role="fieldcontain">
+				<label for="sv_year">Year of Manufacture</label>
+				<select class="selectpicker" name="sv_year" id="sv_year" data-native-menu="false" >
+                	<option value="">Select Year</option>					
+				</select>
+			</div>
+			<div data-role="fieldcontain" >
+            <label for="sv_year"></label>
+           
+                    <button type="button" name="btn_view" data-icon="check" data-inline="true" class="mybtn redbtn"  data-theme="b" onClick="ReqValue()" >Request Value</button>
+                
+			</div>
+		</form>
+	</div>
+	<div data-role="content">
+		<div data-role="fieldcontain" id="sv_result" name="sv_result" class="centerbox">			
+				<strong>Your Resale value</strong><br><br><small><i>< No Data ></i></small><br>	
+                			
+		</div>
+        <div id="err_res"  name="err_res" class="centerbox" style="display:none">
+ <button type="button" name="btn_err" data-icon="refresh" data-inline="true"   data-theme="b" data-mini="true" onClick="ReqValue()" >Loading Error. Retry now</button></div>
+        
+                
+	</div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,191 @@
+<style>
+.header_div{
+	opacity: 1;
+	background-color:#f7f7f7;
+	
+}
+.content_div{
+	top:80px;
+	overflow:scroll;
+	z-index:400;
+	clear:both;
+}
+</style>
+<!DOCTYPE html>
+<html>
+<head>
+
+
+<link rel="stylesheet" href="css/jquery.mobile-xprez.css">
+<link rel="stylesheet" href="css/mobile_styles.css">
+<script src="./js/jquery-1.8.3.min.js"></script>
+<script src="js/jquery.mobile-1.4.2.min.js"></script>
+<script type="text/javascript" src="js/jqm-spinbox.js"></script>
+<script>
+
+function loadIntiData(){		
+	newRow="";
+	// Load Manufacturer
+	url="admin/getitems.php?m=cloth";	
+	alert(url);
+	$.ajax({
+	  url: url,
+	  dataType: 'json',
+	  success: function(result){	//alert("token recieved: " + result.token);
+		data=result['data'];	
+		alert(data);
+	    ar=data.split("|");
+		//alert(ar.length);
+		len=ar.length-1;
+		str="+";
+		for(i=1;i<ar.length;i++){
+			//alert(ar[i]);
+			af=ar[i].split(":");
+			newRow=newRow+"<tr><td width='85%'><div data-role='fieldcontain'><input type='checkbox' name='chk_"+ar[0]+"_"+i+"' id='chk_"+ar[0]+"_"+i+"' class='custom' onclick='javascript: onCheck("+ar[0]+","+i+")' /><label for='checkbox-1'>"+af[1]+"</label><input type='text' name='prodid__"+ar[0]+"_"+i+"' id='prodid__"+ar[0]+"_"+i+"' value='"+af[0]+"' /><input type='text' name='hidrate_"+ar[0]+"_"+i+"' id='hidrate_"+ar[0]+"_"+i+"' value='"+af[2]+"' /></div></td>"
+			newRow=newRow+"<td width='15%'><div class='ui-field-contain' id='cnt_div_"+i+"' style='display:none;'><input type='text' data-mini='true' data-role='spinbox' name='spin_"+ar[0]+"_"+i+"' id='spin_"+ar[0]+"_"+i+"' data-options='{'type':'horizontal'}' step='1' value='0' max='100' onBlur='javascript: changeProduct("+ar[0]+","+i+")' /><input type='text' name='cnt_"+ar[0]+"_"+i+"' id='cnt_"+ar[0]+"_"+i+"' value='0' /></div></td></tr>";
+		}
+		alert(newRow);
+		alert(len);
+	    $('#cloth_tbl').empty();
+	    $('#cloth_tbl').append(newRow);	
+		$('#hidcnt').val(len);
+	    $('#cloth_tbl').checkbox('refresh');	
+		$('#err_manu').hide(); 		
+	  },
+	  error: function(request, textStatus, errorThrown) { $('#err_manu').show(); alert("Error on Loading, Click Retry Now Button");	  },
+	  complete: function(request, textStatus) { //for additional info
+		//alert("text="+request.responseText);
+		//alert("status="+textStatus);
+	  }
+	});
+}
+function onCheck(sid,id){
+	//alert($('#chk_'+sid+"_"+id).is(':checked'));
+	if($('#chk_'+sid+"_"+id).is(':checked')==true){
+		$('#cnt_div_'+id).css('display','');
+		$("#cnt_"+sid+"_"+id).val(1);
+		$("#spin_"+sid+"_"+id).val(1);	
+	} else if($('#chk_'+sid+"_"+id).is(':checked')==false){
+		$('#cnt_div_'+id).css('display','none');
+		$("#cnt_"+sid+"_"+id).val(0);
+		$("#spin_"+sid+"_"+id).val(0);	
+	}
+	calSummary(sid);
+}
+function changeProduct(sid,id){
+	//alert(sid+"=="+str);
+	//alert($('#chk_'+sid+"_"+i).is(':checked'));
+	if($('#chk_'+sid+"_"+id).is(':checked')==true){
+		cnt=$("#spin_"+sid+"_"+id).val();
+		ncnt=cnt;
+		/*if(str=="+"){
+			ncnt++;			
+		} else if(str=="-"){
+			if(ncnt<=0){
+				alert("Cannot able reduce count, Its already zero");
+			} else if(ncnt>0){
+				ncnt--;
+			}
+		}*/
+		$("#cnt_"+sid+"_"+id).val(ncnt);
+		$("#spin_"+sid+"_"+id).html(ncnt);	
+	} else if($('#chk_'+sid+"_"+id).is(':checked')==false){
+		alert("Select Cloth Name First");
+	}
+	calSummary(sid);
+}
+
+function addProduct(sid,id,str){
+	alert(sid+"=="+str);
+	alert($('#chk_'+sid+"_"+i).is(':checked'));
+	if($('#chk_'+sid+"_"+id).is(':checked')==true){
+		cnt=$("#cnt_"+sid+"_"+id).val();
+		ncnt=cnt;
+		if(str=="+"){
+			ncnt++;			
+		} else if(str=="-"){
+			if(ncnt<=0){
+				alert("Cannot able reduce count, Its already zero");
+			} else if(ncnt>0){
+				ncnt--;
+			}
+		}
+		$("#cnt_"+sid+"_"+id).val(ncnt);
+		$("#spin_"+sid+"_"+id).html(ncnt);	
+	} else if($('#chk_'+sid+"_"+id).is(':checked')==false){
+		alert("Select Cloth Name First");
+	}
+	calSummary(sid);
+}
+function calSummary(sid){
+	totqty=0;
+	tt=0;
+	totamt=0;
+	for(i=1;i<=parseInt($('#hidcnt').val());i++){
+		rat=0; ncnt=0;
+		cnt=parseInt($("#cnt_"+sid+"_"+i).val());
+		rat=cnt*parseFloat($("#hidrate_"+sid+"_"+i).val());
+		totqty=totqty+cnt;
+		totamt=totamt+rat;
+		//alert(totqty+"----"+totamt);
+		$("#itm_totcnt").val(totqty);
+		$("#itm_totrate").val(totamt);				
+		$("#itemrate").html(totamt.toFixed(2));
+		$("#itemcnt").html(totqty);
+	}
+}
+
+function saveData(st){
+	//alert("Hi");
+	//alert(div+"|"+pg+"|"+md+"|"+par+"|"+adiv+"|"+amd+"|"+astr);
+	str=$( "form" ).serialize();
+	//alert("str="+str);
+	$.get("admin/update_data.php?md=cus_order&str="+st+"&"+str , function(data,status){
+		//alert("Data=>"+data);
+		if(data!=""){
+			//alert(data);
+			window.location.href = "index.html"; 
+		}
+	});
+}
+
+</script>
+</head>
+<body onLoad="loadIntiDat()">
+
+<div data-role="page" id="pageone" data-theme="a">
+	<div class="ui-header ui-bar-f ui-header-fixed slidedown header_div" data-role="header" data-theme="f" data-position="fixed" role="banner"><h1><img src="images/logo_small.png"></h1></div>
+	<div class="ui-content content_div" data-role="content" role="main">
+		<form action="#" method="post" name="booking" id="booking">
+			<!--<p>AutoMarket, mobile market of Used Commercial Vehicle.</p> -->
+			<div data-role="fieldcontain">
+				<input type="text" name="hidcnt" id="hidcnt" value="1"/>
+				<table align="" width="100%" cellpadding="5px" id="cloth_tbl" >
+					<tr>										
+						<td >
+							<div data-role="fieldcontain">						
+								<label  align="left"><b>#123</b></label>			
+								<label  align="right"><b>10 items</b></label><br/><br/>
+								<label  align="left"><b>Ismail</b></label>						
+								<label  align="right"><b>1000</b></label><br>
+							<hr>
+							</div>
+						</td>
+						
+					</tr>
+					
+				</table>
+			</div>
+		</form>
+	</div>
+	<div data-role="footer" data-theme="a" data-position="fixed" class="ui-footer ui-bar ui-footer-fixed slideup" role="contentinfo">
+		<h1 class="ui-title" role="heading" aria-level="1">
+			<span id="itemcnt">0</span> Items  &nbsp;&nbsp;
+			Rs. <span id="itemrate">0</span> /- &nbsp;&nbsp;
+			<a href="javascript: saveData('col')" id="sendback" data-rel="popup" data-theme="a" data-role="button" data-inline="true">Collected</a> &nbsp;&nbsp;
+			<a href="javascript: saveData('req')" id="sendback" data-rel="popup" data-theme="a" data-role="button" data-inline="true">Request</a> &nbsp;&nbsp;
+		</h1>
+	</div>
+</div>
+</body>
+</html>

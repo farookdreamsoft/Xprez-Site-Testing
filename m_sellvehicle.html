@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+
+<link rel="stylesheet" href="css/jquery.mobile-automarket.css">
+<link rel="stylesheet" href="css/mobile_styles.css">
+<script src="js/jquery-1.8.3.min.js"></script>
+<script src="js/jquery.mobile-1.4.2.min.js"></script>
+<script src="js/jquery.validate.js"></script>
+<script src="js/jquery-fileupload.js"></script>
+
+<script>
+
+
+function loadIntiData(){		
+	// Loading Year 
+	$('#sv_year').empty();
+	$('#sv_year').append(new Option("Select Year",""));	
+	cy=new Date().getFullYear();
+	for (y=cy;y>cy-11;y--){
+	   $('#sv_year').append(new Option(y,y));
+	   //alert(itm[1]);
+	}
+	$('#sv_year').selectmenu('refresh');		
+	
+	// Load Manufacturer
+	url="http://www.autoasia.in/admin/m_getitems.php?m=listmanu";	
+	$.ajax({
+	  url: url,
+	  dataType: 'json',
+	  success: function(result){	//alert("token recieved: " + result.token);
+		data=result['data'];	
+	    manu=data.split("|");			
+	    $('#sv_mftname').empty();
+	    $('#sv_mftname').append(new Option("Select Manufacturer",""));	
+	    $.each(manu, function(val, txt) {	
+		    itm=txt.split("=>");			
+		    $('#sv_mftname').append(new Option(itm[1],itm[0]));
+		    //alert(itm[1]);
+	    });	
+	    $('#sv_mftname').selectmenu('refresh');	
+		$('#err_manu').hide(); 		
+	  },
+	  error: function(request, textStatus, errorThrown) { $('#err_manu').show(); alert("Error on Loading, Click Retry Now Button");	  },
+	  complete: function(request, textStatus) { //for additional info
+		//alert("text="+request.responseText);
+		//alert("status="+textStatus);
+	  }
+	});
+}
+
+function onMftSelect(){	
+	vcat= $('#sv_mftname').val();
+	//alert(vcat);		
+	if(!vcat=="") {
+		url="http://www.autoasia.in/admin/m_getitems.php?m=listmodel&mft="+vcat;	
+		$.ajax({
+		  url: url,
+		  dataType: 'json',
+		  success: function(result){			
+			data=result['data'];			
+			models=data.split("|");			
+			$('#sv_model').empty();
+			$('#sv_model').append(new Option("Select Model",""));
+			$.each(models, function(val, text) {	
+				itm=text.split("=>");			
+				$('#sv_model').append(new Option(itm[1],itm[0]));
+				//alert(itm[1]);
+			});	
+			$('#sv_model').selectmenu('refresh');		
+			$('#err_model').hide();	
+		  },
+		  error: function(request, textStatus, errorThrown) { $('#err_model').show(); alert("Error on Loading, Click Retry Now Button"); },
+		  complete: function(request, textStatus) { //for additional info
+			//alert("text="+request.responseText);
+			//alert("status="+textStatus);
+		  }
+		});			
+	}		
+}
+
+</script>
+<style>
+#multiform label.error {
+	margin-left: 10px;
+	width: auto;
+	display: inline;
+}
+</style>
+</head>
+<body onLoad="loadIntiData()">
+
+<div data-role="page"  data-theme="a">
+	<div data-role="header" class="blackbg" data-theme="b">
+  		<h1>Sell Your Vehicle</h1>
+  	</div>
+	<div data-role="content">
+		<form  class="cmxform" enctype="multipart/form-data"  method="post" data-ajax="false"  class="form-horizontal" name="multiform" id="multiform"  action="http://www.autoasia.in/admin/m_getitems.php?m=upload">
+			<div data-role="fieldcontain">
+				<label for="sv_adtitle">Advertisement Title</label>
+				<input type="text" name="sv_adtitle" id="sv_adtitle" placeholder="Enter AD Title Here" minlength="2" required>
+                <label for="sv_adtitle"></label>
+                <span class="tiptext">E.g. Good Condition Tata Bulker 2010 Model</span>
+			</div>
+			<div data-role="fieldcontain">
+				<label for="sv_addes">Description about your Ad.</label>
+				<textarea name="sv_addes" id="sv_addes" rows="2" placeholder="Enter Description Here" ></textarea>
+                <label for="sv_adtitle"></label>
+                <span class="tiptext">E.g. Location: Chennai-AnnaNagar. No Agent or Consultant allowed. </span>
+			</div>
+			<div data-role="fieldcontain">
+				<label for="sv_mftname">Manufacturer Name</label>
+				<select class="selectpicker" name="sv_mftname" id="sv_mftname" onChange="onMftSelect()" data-native-menu="false" required> 
+
+				<option value="">Select Manufacturer</option>
+
+				</select>
+<label></label>
+                <div id="err_manu"  name="err_manu" class="centerbox" style="display:none">
+ <button type="button" name="btn_err" data-icon="refresh" data-inline="true"   data-theme="b" data-mini="true" onClick="loadIntiData()" >Loading Error. Retry now</button></div>
+
+			</div>
+			<div data-role="fieldcontain">
+				<label for="sv_model">Model Name</label>
+				<select class="selectpicker" name="sv_model" id="sv_model"  data-native-menu="false" required >
+	               	<option value="">Select Model</option>
+    			</select>
+  <label></label>
+                <div id="err_model"  name="err_model" class="centerbox" style="display:none">
+ <button type="button" name="btn_err" data-icon="refresh" data-inline="true"   data-theme="b" data-mini="true" onClick="onMftSelect()" >Loading Error. Retry now</button></div>
+			</div>
+			<div data-role="fieldcontain">
+				<label for="sv_year">Year of Manufacture</label>
+				<select class="selectpicker" name="sv_year" id="sv_year" data-native-menu="false" required>
+                	<option value="">Select Year</option>
+				
+				</select>
+			</div>
+			<div data-role="fieldcontain">
+				<label for="sv_price">Price</label>
+				<input type="text" name="sv_price" id="sv_price" placeholder="Enter Price in Lakhs Here" required>
+                <label for="sv_adtitle"></label>
+                <span class="tiptext">E.g. 5.75 for Rs. 5,75,000</span>
+			</div>
+			<div data-role="fieldcontain">
+				<label for="sv_name">Seller Name</label>
+				<input type="text" name="sv_name" id="sv_name"  minlength="5" placeholder="Enter Seller Name Here" required>
+			</div>
+			<div data-role="fieldcontain">
+				<label for="sv_mobile">Mobile</label>
+				<input type="text" name="sv_mobile" id="sv_mobile" placeholder="Enter Mobile Here" minlength="10" required>
+			</div>
+			<div data-role="fieldcontain">
+				<label for="sv_city">City</label>
+				<input type="text" name="sv_city" id="sv_city" placeholder="Enter City Here" />
+			</div>
+   			<div data-role="fieldcontain">
+    			<label for="sv_image">Vehicle Photo</label>    			
+    			  <input type="file" name="sv_image" id="sv_image" />			    			
+   			</div>    
+			<div  data-role="fieldcontain" class="form-actions">
+            
+            <label for="sv_year"></label>	  		
+			
+               
+                    
+                    <button type="submit" name="btn_upload" id="btn_upload"  data-icon="check" data-inline="true" class="mybtn redbtn"  data-theme="b"  >Upload Vehicle for Sale</button>
+                    		
+				<button type="reset" name="btn_reset" data-icon="delete" data-inline="true" >Reset</button>
+			</div>
+		</form>
+	</div>
+</div>
+
+</body>
+</html>
